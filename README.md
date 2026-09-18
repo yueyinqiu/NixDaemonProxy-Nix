@@ -78,7 +78,6 @@ Options under `services.nix-daemon-proxy`:
 | --- | --- | --- | --- |
 | `enable` | bool | `false` | Whether to enable NixDaemonProxy |
 | `package` | package | this flake's `nix-daemon-proxy-server` | The server package to run |
-| `clientPackage` | package | wrapped client | Wrapped client with the control socket preset |
 | `installClient` | bool | `false` | Also install the wrapped client into `environment.systemPackages` |
 | `group` | str | `"nix-daemon-proxy"` | Group whose members can access the control socket |
 | `controlSocket` | str | `"/run/nix-daemon-proxy.sock"` | Unix socket path the control server listens on |
@@ -87,10 +86,10 @@ Options under `services.nix-daemon-proxy`:
 
 The proxy password is always generated randomly per boot by the server.
 
-`clientPackage` wraps `NixDaemonProxy.Client` so the `--control-socket` flag is
-already preset to `services.nix-daemon-proxy.controlSocket`, and exposes it as
-the `nix-daemon-proxy` binary. Set `installClient = true` to put it on the
-system-wide `PATH`, or use `clientPackage` in your own `home.packages`:
+Setting `installClient = true` wraps `NixDaemonProxy.Client` so the
+`--control-socket` flag is already preset to
+`services.nix-daemon-proxy.controlSocket`, and installs it system-wide as the
+`nix-daemon-proxy` binary.
 
 ## Usage
 

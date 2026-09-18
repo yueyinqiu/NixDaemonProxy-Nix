@@ -8,6 +8,12 @@
 let
   cfg = config.services.nix-daemon-proxy;
   client = pkgs.callPackage ../packages/client { };
+  wrappedClient = pkgs.writeShellApplication {
+    name = "nix-daemon-proxy";
+    text = ''
+      exec ${client}/bin/NixDaemonProxy.Client "$@" --control-socket ${lib.escapeShellArg cfg.controlSocket}
+    '';
+  };
 in
 {
   options.services.nix-daemon-proxy = {
@@ -17,17 +23,6 @@ in
       type = lib.types.package;
       default = pkgs.callPackage ../packages/server { };
       description = "The NixDaemonProxy server package to run.";
-    };
-
-    clientPackage = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.writeShellApplication {
-        name = "nix-daemon-proxy";
-        text = ''
-          exec "${client}/bin/NixDaemonProxy.Client" "$@" --control-socket ${lib.escapeShellArg cfg.controlSocket}
-        '';
-      };
-      description = "Wrapped client with the control socket preset.";
     };
 
     installClient = lib.mkEnableOption "the wrapped NixDaemonProxy client in `environment.systemPackages`";
@@ -60,7 +55,7 @@ in
   config = lib.mkIf cfg.enable {
     users.groups.${cfg.group} = { };
 
-    environment.systemPackages = lib.mkIf cfg.installClient [ cfg.clientPackage ];
+    environment.systemPackages = lib.mkIf cfg.installClient [ wrappedClient ];
 
     systemd.services.nix-daemon-proxy-server = {
       wantedBy = [ "multi-user.target" ];
@@ -76,8 +71,12 @@ in
             "${cfg.package}/bin/NixDaemonProxy.Server"
             "--control-socket" cfg.controlSocket
             "--control-group" cfg.group
-            "--nix-daemon-service" (if cfg.nixDaemonService == null then "" else cfg.nixDaemonService)
           ]
+          ++ (
+            if cfg.nixDaemonService == null
+            then [ "--nix-daemon-service" ]
+            else [ "--nix-daemon-service" cfg.nixDaemonService ]
+          )
           ++ lib.optionals (cfg.proxyPort != null) [ "--proxy-port" (toString cfg.proxyPort) ]
         );
 
