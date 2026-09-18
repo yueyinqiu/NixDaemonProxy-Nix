@@ -24,5 +24,10 @@
           nix-daemon-proxy-server = pkgs.callPackage ./packages/server { };
         }
       );
+
+      nixosModules = {
+        nix-daemon-proxy = ./nixos-module;
+        default = ./nixos-module;
+      };
     };
 }

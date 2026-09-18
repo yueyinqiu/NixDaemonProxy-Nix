@@ -45,10 +45,50 @@ Or try them directly from the CLI:
 $ nix shell github:yueyinqiu/NixDaemonProxy-Nix#nix-daemon-proxy-client
 ```
 
+## NixOS module
+
+A module is exposed as `nixosModules.nix-daemon-proxy` (also available as
+`nixosModules.default`). It runs the proxy server as a `systemd` service and
+creates the control group:
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nix-daemon-proxy.url = "github:yueyinqiu/NixDaemonProxy-Nix";
+  };
+
+  outputs = { nixpkgs, nix-daemon-proxy, ... }: {
+    nixosConfigurations.your-host = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        nix-daemon-proxy.nixosModules.nix-daemon-proxy
+        {
+          services.nix-daemon-proxy.enable = true;
+        }
+      ];
+    };
+  };
+}
+```
+
+Options under `services.nix-daemon-proxy`:
+
+| Name | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enable` | bool | `false` | Whether to enable NixDaemonProxy |
+| `package` | package | this flake's `nix-daemon-proxy-server` | The server package to run |
+| `group` | str | `"nix-daemon-proxy"` | Group whose members can access the control socket |
+| `controlSocket` | str | `"/run/nix-daemon-proxy.sock"` | Unix socket path the control server listens on |
+| `proxyPort` | nullOr port | `null` | TCP port the local proxy listens on (`127.0.0.1`); random when `null` |
+| `nixDaemonService` | nullOr str | `"nix-daemon"` | systemd service to configure; `null` disables daemon configuration |
+
+The proxy password is always generated randomly per boot by the server.
+
 ## Usage
 
 See the [NixDaemonProxy README](https://github.com/yueyinqiu/NixDaemonProxy) for
-how to set up the server (NixOS `systemd` service) and use the client.
+how to use the client.
 
 ---
 
