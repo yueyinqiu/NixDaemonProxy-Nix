@@ -7,6 +7,7 @@
 
 let
   cfg = config.services.nix-daemon-proxy;
+  client = pkgs.callPackage ../packages/client { };
 in
 {
   options.services.nix-daemon-proxy = {
@@ -17,6 +18,19 @@ in
       default = pkgs.callPackage ../packages/server { };
       description = "The NixDaemonProxy server package to run.";
     };
+
+    clientPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.writeShellApplication {
+        name = "nix-daemon-proxy";
+        text = ''
+          exec "${client}/bin/NixDaemonProxy.Client" "$@" --control-socket ${lib.escapeShellArg cfg.controlSocket}
+        '';
+      };
+      description = "Wrapped client with the control socket preset.";
+    };
+
+    installClient = lib.mkEnableOption "the wrapped NixDaemonProxy client in `environment.systemPackages`";
 
     group = lib.mkOption {
       type = lib.types.str;
@@ -46,6 +60,8 @@ in
   config = lib.mkIf cfg.enable {
     users.groups.${cfg.group} = { };
 
+    environment.systemPackages = lib.mkIf cfg.installClient [ cfg.clientPackage ];
+
     systemd.services.nix-daemon-proxy-server = {
       wantedBy = [ "multi-user.target" ];
 
@@ -65,11 +81,7 @@ in
           ++ lib.optionals (cfg.proxyPort != null) [ "--proxy-port" (toString cfg.proxyPort) ]
         );
 
-        # kestrel deletes the socket file on clean shutdown, but if the
-        # process is killed (crash, OOM, ...) the stale socket remains and
-        # blocks the next start with "address already in use".
-        # clean it up before each start.
-        ExecStartPre = "${pkgs.coreutils}/bin/rm -f ${cfg.controlSocket}";
+        ExecStartPre = ''"${pkgs.coreutils}/bin/rm" -f ${lib.escapeShellArg cfg.controlSocket}'';
 
         Restart = "on-failure";
         RestartSec = "5s";
