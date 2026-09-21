@@ -50,12 +50,11 @@ in
     users.groups.${cfg.group} = { };
 
     environment.systemPackages = lib.mkIf cfg.installClient [
-      (pkgs.writeShellApplication {
-        name = "nix-daemon-proxy";
-        text = ''
-          exec ${client}/bin/NixDaemonProxy.Client "$@" --control-socket ${lib.escapeShellArg cfg.controlSocket}
-        '';
-      })
+      (pkgs.runCommand "nix-daemon-proxy" { } ''
+        mkdir -p "$out/bin"
+        "${pkgs.makeWrapper}/bin/makeWrapper" ${client}/bin/NixDaemonProxy.Client "$out/bin/nix-daemon-proxy" \
+          --set-default NIX_DAEMON_PROXY_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg cfg.controlSocket}
+      '')
     ];
 
     systemd.services.nix-daemon-proxy-server = {
