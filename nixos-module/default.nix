@@ -50,9 +50,9 @@ in
     users.groups.${cfg.group} = { };
 
     environment.systemPackages = lib.mkIf cfg.installClient [
-      (pkgs.runCommand "nix-daemon-proxy" { } ''
+      (pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
         mkdir -p "$out/bin"
-        "${pkgs.makeWrapper}/bin/makeWrapper" ${client}/bin/NixDaemonProxy.Client "$out/bin/nix-daemon-proxy" \
+        makeWrapper ${client}/bin/NixDaemonProxy.Client "$out/bin/nix-daemon-proxy" \
           --set-default NIX_DAEMON_PROXY_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg cfg.controlSocket}
       '')
     ];
