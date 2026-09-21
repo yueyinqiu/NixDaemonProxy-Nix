@@ -50,13 +50,12 @@ in
     users.groups.${cfg.group} = { };
 
     environment.systemPackages = lib.mkIf cfg.installClient [
-      pkgs.writeShellApplication
-      {
+      (pkgs.writeShellApplication {
         name = "nix-daemon-proxy";
         text = ''
           exec ${client}/bin/NixDaemonProxy.Client "$@" --control-socket ${lib.escapeShellArg cfg.controlSocket}
         '';
-      }
+      })
     ];
 
     systemd.services.nix-daemon-proxy-server = {
