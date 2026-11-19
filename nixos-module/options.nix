@@ -9,26 +9,20 @@
 
     group = lib.mkOption {
       type = lib.types.str;
-      default = "proxy-switchboard";
+      default = "nix-daemon-proxy";
       description = "Group whose members get read/write access to the control socket.";
     };
 
     controlSocket = lib.mkOption {
       type = lib.types.str;
-      default = "/run/nix-daemon-proxy-switchboard/control.sock";
+      default = "/run/nix-daemon-proxy/control.sock";
       description = "Unix socket path the control HTTP server listens on.";
     };
 
     proxyPort = lib.mkOption {
       type = lib.types.port;
-      default = 11111;
+      default = 62720;
       description = "TCP port the local proxy listens on (`127.0.0.1`).";
-    };
-
-    nixDaemonService = lib.mkOption {
-      type = lib.types.str;
-      default = "nix-daemon";
-      description = "Name of the systemd service to configure the proxy for.";
     };
 
     packages.proxy-switchboard-server = {

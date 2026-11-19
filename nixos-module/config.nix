@@ -6,15 +6,15 @@
 let
   cfg = config.services.nix-daemon-proxy-switchboard;
 
-  runtimeDir = "/run/nix-daemon-proxy-switchboard";
+  runtimeDir = "/run/nix-daemon-proxy";
   envFile = "${runtimeDir}/environment";
-  dropInDir = "/run/systemd/system/${cfg.nixDaemonService}.service.d";
-  dropInFile = "${dropInDir}/nix-daemon-proxy-switchboard.conf";
+  dropInDir = "/run/systemd/system/nix-daemon.service.d";
+  dropInFile = "${dropInDir}/nix-daemon-proxy.conf";
 
   proxyUrl = "http://user:\${password}@127.0.0.1:${toString cfg.proxyPort}/";
 
   initScript = pkgs.writeShellApplication {
-    name = "nix-daemon-proxy-switchboard-init";
+    name = "nix-daemon-proxy-init";
     runtimeInputs = [
       pkgs.openssl
       pkgs.coreutils
@@ -40,12 +40,12 @@ let
       EOF
 
       ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart "${cfg.nixDaemonService}"
+      ${lib.getExe' pkgs.systemd "systemctl"} restart "nix-daemon"
     '';
   };
 
   cleanupScript = pkgs.writeShellApplication {
-    name = "nix-daemon-proxy-switchboard-cleanup";
+    name = "nix-daemon-proxy-cleanup";
     runtimeInputs = [
       pkgs.coreutils
       pkgs.systemd
@@ -53,7 +53,7 @@ let
     text = ''
       rm -f "${dropInFile}"
       ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart "${cfg.nixDaemonService}"
+      ${lib.getExe' pkgs.systemd "systemctl"} restart "nix-daemon"
     '';
   };
 in
@@ -71,14 +71,14 @@ in
     ++ (lib.optional cfg.packages.proxy-switchboard-client.install cfg.packages.proxy-switchboard-client.package)
     ++ (lib.optional cfg.packages.nix-daemon-proxy-client.install cfg.packages.nix-daemon-proxy-client.package);
 
-  systemd.services.nix-daemon-proxy-switchboard = {
+  systemd.services.nix-daemon-proxy-server = {
     description = "ProxySwitchboard (upstream for nix-daemon)";
     wantedBy = [ "multi-user.target" ];
 
     serviceConfig = {
       DynamicUser = true;
       Group = cfg.group;
-      RuntimeDirectory = "nix-daemon-proxy-switchboard";
+      RuntimeDirectory = "nix-daemon-proxy";
       UMask = "0007";
 
       EnvironmentFile = envFile;
