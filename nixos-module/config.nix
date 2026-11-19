@@ -26,7 +26,7 @@ let
     text = ''
       umask 077
 
-      password="$(${lib.getExe pkgs.openssl} rand -hex 16)"
+      password="$(openssl rand -hex 16)"
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${envFile}"
 
       install -d "${dropInDirectory}"
@@ -40,8 +40,8 @@ let
       Environment="HTTPS_PROXY=${proxyUrl}"
       EOF
 
-      ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart nix-daemon
+      systemctl daemon-reload
+      systemctl restart nix-daemon
     '';
   };
 
@@ -53,8 +53,8 @@ let
     ];
     text = ''
       rm -f "${dropInFile}"
-      ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart nix-daemon
+      systemctl daemon-reload
+      systemctl restart nix-daemon
     '';
   };
 in
