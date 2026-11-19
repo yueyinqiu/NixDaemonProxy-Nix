@@ -60,9 +60,16 @@ in
 {
   users.groups.${cfg.group} = { };
 
+  services.nix-daemon-proxy-switchboard.packages.nix-daemon-proxy-client.package = lib.mkDefault (pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+    mkdir -p "$out/bin"
+    makeWrapper ${lib.getExe cfg.packages.proxy-switchboard-client.package} "$out/bin/nix-daemon-proxy" \
+      --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg cfg.controlSocket}
+  '');
+
   environment.systemPackages =
-    (lib.optional cfg.packages.server.install cfg.packages.server.package)
-    ++ (lib.optional cfg.packages.client.install cfg.packages.client.package);
+    (lib.optional cfg.packages.proxy-switchboard-server.install cfg.packages.proxy-switchboard-server.package)
+    ++ (lib.optional cfg.packages.proxy-switchboard-client.install cfg.packages.proxy-switchboard-client.package)
+    ++ (lib.optional cfg.packages.nix-daemon-proxy-client.install cfg.packages.nix-daemon-proxy-client.package);
 
   systemd.services.nix-daemon-proxy-switchboard = {
     description = "ProxySwitchboard (upstream for nix-daemon)";
@@ -78,7 +85,7 @@ in
 
       ExecStartPre = [ "+${lib.getExe initScript}" ];
       ExecStart = ''
-        ${lib.getExe cfg.packages.server.package} \
+        ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
           --control-socket ${cfg.controlSocket} \
           --proxy-port ${toString cfg.proxyPort}
       '';

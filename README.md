@@ -54,19 +54,20 @@ Options under `services.nix-daemon-proxy-switchboard`:
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
 | `enable` | bool | `false` | Whether to run ProxySwitchboard as the proxy for `nix-daemon` |
-| `packages.server` | submodule | server (`install` default `false`) | The server package and whether to install it |
-| `packages.client` | submodule | client (`install` default `true`) | The client package and whether to install it |
+| `packages.proxy-switchboard-server` | attrset | server (`install` default `false`) | The server package and whether to install it |
+| `packages.proxy-switchboard-client` | attrset | client (`install` default `false`) | The bare client package and whether to install it |
+| `packages.nix-daemon-proxy-client` | attrset | wrapper (`install` default `true`) | The client wrapper (a `nix-daemon-proxy` command) and whether to install it |
 | `group` | str | `"proxy-switchboard"` | Group whose members can access the control socket |
 | `controlSocket` | str | `"/run/nix-daemon-proxy-switchboard/control.sock"` | Unix socket path the control HTTP server listens on |
 | `proxyPort` | port | `11111` | TCP port the local proxy listens on (`127.0.0.1`) |
 | `nixDaemonService` | str | `"nix-daemon"` | systemd service to configure the proxy for |
 
-`packages.server` / `packages.client` each take:
+Each `packages.*` entry takes:
 
 | Name | Type | Default | Description |
 | --- | --- | --- | --- |
-| `package` | package | from `ProxySwitchboard-Nix` | The package to use |
-| `install` | bool | server `false` / client `true` | Whether to add it to `environment.systemPackages` |
+| `package` | package | from `ProxySwitchboard-Nix` (generated for `nix-daemon-proxy-client`) | The package to use |
+| `install` | bool | `false` (`true` for `nix-daemon-proxy-client`) | Whether to add it to `environment.systemPackages` |
 
 ---
 

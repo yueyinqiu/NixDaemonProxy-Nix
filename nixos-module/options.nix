@@ -48,12 +48,24 @@
       package = lib.mkOption {
         type = lib.types.package;
         default = proxy-switchboard.packages.${pkgs.stdenv.hostPlatform.system}.proxy-switchboard-client;
-        description = "The ProxySwitchboard client package.";
+        description = "The bare ProxySwitchboard client package.";
       };
       install = lib.mkOption {
         type = lib.types.bool;
         default = false;
         description = "Whether to add the client package to `environment.systemPackages`.";
+      };
+    };
+
+    packages.nix-daemon-proxy-client = {
+      package = lib.mkOption {
+        type = lib.types.package;
+        description = "The client wrapper package (a `nix-daemon-proxy` command with the control socket preset). Override to supply your own.";
+      };
+      install = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to add the client wrapper to `environment.systemPackages`.";
       };
     };
   };
