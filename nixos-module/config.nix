@@ -61,11 +61,13 @@ in
 {
   users.groups.${cfg.group} = { };
 
-  services.nix-daemon-proxy-switchboard.packages.nix-daemon-proxy-client.package = lib.mkDefault (pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
-    mkdir -p "$out/bin"
-    makeWrapper ${lib.getExe cfg.packages.proxy-switchboard-client.package} "$out/bin/nix-daemon-proxy" \
-      --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg controlSocket}
-  '');
+  services.nix-daemon-proxy-switchboard.packages.nix-daemon-proxy-client.package = lib.mkDefault (
+    pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+      mkdir -p "$out/bin"
+      makeWrapper ${lib.getExe cfg.packages.proxy-switchboard-client.package} "$out/bin/nix-daemon-proxy" \
+        --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg controlSocket}
+    ''
+  );
 
   environment.systemPackages =
     (lib.optional cfg.packages.proxy-switchboard-server.install cfg.packages.proxy-switchboard-server.package)
