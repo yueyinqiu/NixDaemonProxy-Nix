@@ -6,11 +6,13 @@
 let
   cfg = config.services.nix-daemon-proxy-switchboard;
 
-  runtimeDir = "/run/nix-daemon-proxy";
-  controlSocket = "${runtimeDir}/control.sock";
-  envFile = "${runtimeDir}/environment";
-  dropInDir = "/run/systemd/system/nix-daemon.service.d";
-  dropInFile = "${dropInDir}/nix-daemon-proxy.conf";
+  runtimeDirectoryName = "nix-daemon-proxy";
+  runtimeDirectory = "/run/${runtimeDirectoryName}";
+  controlSocket = "${runtimeDirectory}/control.sock";
+  envFile = "${runtimeDirectory}/environment";
+  
+  dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
+  dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
 
   proxyUrl = "http://user:\${password}@127.0.0.1:${toString cfg.proxyPort}/";
 
@@ -25,11 +27,11 @@ let
       umask 077
       password="$(${lib.getExe pkgs.openssl} rand -hex 16)"
 
-      install -d -m 0750 "${runtimeDir}"
+      install -d -m 0750 "${runtimeDirectory}"
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${envFile}"
       chmod 600 "${envFile}"
 
-      install -d "${dropInDir}"
+      install -d "${dropInDirectory}"
       cat > "${dropInFile}" <<EOF
       [Service]
       Environment="all_proxy=${proxyUrl}"
@@ -79,7 +81,7 @@ in
     serviceConfig = {
       DynamicUser = true;
       Group = cfg.group;
-      RuntimeDirectory = "nix-daemon-proxy";
+      RuntimeDirectory = runtimeDirectoryName;
       UMask = "0007";
 
       EnvironmentFile = envFile;
