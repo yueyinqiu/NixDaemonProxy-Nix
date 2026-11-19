@@ -7,12 +7,6 @@
   options.services.nix-daemon-proxy-switchboard = {
     enable = lib.mkEnableOption "ProxySwitchboard as the proxy for nix-daemon";
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = proxy-switchboard.packages.${pkgs.stdenv.hostPlatform.system}.proxy-switchboard-server;
-      description = "The ProxySwitchboard server package to run.";
-    };
-
     group = lib.mkOption {
       type = lib.types.str;
       default = "proxy-switchboard";
@@ -35,6 +29,32 @@
       type = lib.types.str;
       default = "nix-daemon";
       description = "Name of the systemd service to configure the proxy for.";
+    };
+
+    packages.proxy-switchboard-server = {
+      package = lib.mkOption {
+        type = lib.types.package;
+        default = proxy-switchboard.packages.${pkgs.stdenv.hostPlatform.system}.proxy-switchboard-server;
+        description = "The ProxySwitchboard server package to run.";
+      };
+      install = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to add the server package to `environment.systemPackages`.";
+      };
+    };
+
+    packages.proxy-switchboard-client = {
+      package = lib.mkOption {
+        type = lib.types.package;
+        default = proxy-switchboard.packages.${pkgs.stdenv.hostPlatform.system}.proxy-switchboard-client;
+        description = "The ProxySwitchboard client package.";
+      };
+      install = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether to add the client package to `environment.systemPackages`.";
+      };
     };
   };
 }

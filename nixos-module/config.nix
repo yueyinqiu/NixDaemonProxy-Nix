@@ -60,6 +60,10 @@ in
 {
   users.groups.${cfg.group} = { };
 
+  environment.systemPackages =
+    (lib.optional cfg.packages.server.install cfg.packages.server.package)
+    ++ (lib.optional cfg.packages.client.install cfg.packages.client.package);
+
   systemd.services.nix-daemon-proxy-switchboard = {
     description = "ProxySwitchboard (upstream for nix-daemon)";
     wantedBy = [ "multi-user.target" ];
@@ -74,7 +78,7 @@ in
 
       ExecStartPre = [ "+${lib.getExe initScript}" ];
       ExecStart = ''
-        ${lib.getExe cfg.package} \
+        ${lib.getExe cfg.packages.server.package} \
           --control-socket ${cfg.controlSocket} \
           --proxy-port ${toString cfg.proxyPort}
       '';
