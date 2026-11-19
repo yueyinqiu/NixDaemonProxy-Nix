@@ -10,7 +10,7 @@ let
   runtimeDirectory = "/run/${runtimeDirectoryName}";
   controlSocket = "${runtimeDirectory}/control.sock";
   envFile = "${runtimeDirectory}/environment";
-  
+
   dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
 
@@ -25,11 +25,9 @@ let
     ];
     text = ''
       umask 077
-      password="$(${lib.getExe pkgs.openssl} rand -hex 16)"
 
-      install -d -m 0750 "${runtimeDirectory}"
+      password="$(${lib.getExe pkgs.openssl} rand -hex 16)"
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${envFile}"
-      chmod 600 "${envFile}"
 
       install -d "${dropInDirectory}"
       cat > "${dropInFile}" <<EOF
@@ -43,7 +41,7 @@ let
       EOF
 
       ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart "nix-daemon"
+      ${lib.getExe' pkgs.systemd "systemctl"} restart nix-daemon
     '';
   };
 
@@ -56,7 +54,7 @@ let
     text = ''
       rm -f "${dropInFile}"
       ${lib.getExe' pkgs.systemd "systemctl"} daemon-reload
-      ${lib.getExe' pkgs.systemd "systemctl"} restart "nix-daemon"
+      ${lib.getExe' pkgs.systemd "systemctl"} restart nix-daemon
     '';
   };
 in
@@ -82,6 +80,7 @@ in
       DynamicUser = true;
       Group = cfg.group;
       RuntimeDirectory = runtimeDirectoryName;
+      RuntimeDirectoryMode = "0750";
       UMask = "0007";
 
       EnvironmentFile = envFile;
