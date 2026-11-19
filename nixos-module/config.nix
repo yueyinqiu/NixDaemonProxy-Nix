@@ -7,6 +7,7 @@ let
   cfg = config.services.nix-daemon-proxy-switchboard;
 
   runtimeDir = "/run/nix-daemon-proxy";
+  controlSocket = "${runtimeDir}/control.sock";
   envFile = "${runtimeDir}/environment";
   dropInDir = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDir}/nix-daemon-proxy.conf";
@@ -63,7 +64,7 @@ in
   services.nix-daemon-proxy-switchboard.packages.nix-daemon-proxy-client.package = lib.mkDefault (pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
     mkdir -p "$out/bin"
     makeWrapper ${lib.getExe cfg.packages.proxy-switchboard-client.package} "$out/bin/nix-daemon-proxy" \
-      --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg cfg.controlSocket}
+      --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg controlSocket}
   '');
 
   environment.systemPackages =
@@ -86,7 +87,7 @@ in
       ExecStartPre = [ "+${lib.getExe initScript}" ];
       ExecStart = ''
         ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
-          --control-socket ${cfg.controlSocket} \
+          --control-socket ${controlSocket} \
           --proxy-port ${toString cfg.proxyPort}
       '';
       ExecStopPost = [ "+${lib.getExe cleanupScript}" ];

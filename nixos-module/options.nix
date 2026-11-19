@@ -13,12 +13,6 @@
       description = "Group whose members get read/write access to the control socket.";
     };
 
-    controlSocket = lib.mkOption {
-      type = lib.types.str;
-      default = "/run/nix-daemon-proxy/control.sock";
-      description = "Unix socket path the control HTTP server listens on.";
-    };
-
     proxyPort = lib.mkOption {
       type = lib.types.port;
       default = 62720;
