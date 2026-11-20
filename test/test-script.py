@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 start_all()
 
 machine.wait_for_unit("nix-daemon-proxy-server.service")
@@ -12,9 +14,14 @@ rmode, rowner = rdir.split(" ", 1)
 assert rmode == "750", f"runtime dir mode = {rdir!r}, want 750"
 assert rowner.split(":")[1] == "nix-daemon-proxy", f"runtime dir owner = {rdir!r}"
 
-# --- password file: only root can read it ---
-env = machine.succeed("stat -c '%a %U:%G' /run/nix-daemon-proxy/environment").strip()
-assert env == "600 root:root", f"environment perms = {env!r}, want 600 root:root"
+# --- password file: only the server (its dynamic user) can read it ---
+pw = machine.succeed("stat -c '%a %U:%G' /run/nix-daemon-proxy/password").strip()
+pmode, powner = pw.split(" ", 1)
+assert pmode == "600", f"password perms = {pw!r}, want 600"
+assert powner.endswith(":root"), f"password group = {pw!r}, want root"
+
+# wait for the server to bind its control socket
+machine.wait_until_succeeds("test -S /run/nix-daemon-proxy/control.sock", timeout=timedelta(seconds=30))
 
 # --- control socket: group can read/write, others get nothing ---
 sock = machine.succeed("stat -c '%a %G' /run/nix-daemon-proxy/control.sock").strip()
@@ -36,4 +43,4 @@ assert "all_proxy=http://user:" in nixenv, nixenv
 
 # --- a group member can use the socket, but cannot read the password ---
 machine.succeed("runuser -u alice -- nix-daemon-proxy status")
-machine.fail("runuser -u alice -- cat /run/nix-daemon-proxy/environment")
+machine.fail("runuser -u alice -- cat /run/nix-daemon-proxy/password")

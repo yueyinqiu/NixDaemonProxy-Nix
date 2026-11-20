@@ -9,7 +9,7 @@ let
   runtimeDirectoryName = "nix-daemon-proxy";
   runtimeDirectory = "/run/${runtimeDirectoryName}";
   controlSocket = "${runtimeDirectory}/control.sock";
-  envFile = "${runtimeDirectory}/environment";
+  passwordFile = "${runtimeDirectory}/password";
 
   dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
@@ -27,7 +27,9 @@ let
       umask 077
 
       password="$(openssl rand -hex 16)"
-      printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${envFile}"
+      uid="$(stat -c %u "${runtimeDirectory}")"
+      printf '%s' "$password" > "${passwordFile}"
+      chown "$uid" "${passwordFile}"
 
       install -d "${dropInDirectory}"
       cat > "${dropInFile}" <<EOF
@@ -55,6 +57,19 @@ let
       rm -f "${dropInFile}"
       systemctl daemon-reload
       systemctl restart nix-daemon
+    '';
+  };
+
+  runScript = pkgs.writeShellApplication {
+    name = "nix-daemon-proxy-run";
+    runtimeInputs = [
+      pkgs.coreutils
+    ];
+    text = ''
+      PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD="$(cat ${passwordFile})" \
+        exec ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
+          --control-socket ${controlSocket} \
+          --proxy-port ${toString cfg.proxyPort}
     '';
   };
 in
@@ -85,14 +100,8 @@ in
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
 
-      EnvironmentFile = envFile;
-
       ExecStartPre = [ "+${lib.getExe initScript}" ];
-      ExecStart = ''
-        ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
-          --control-socket ${controlSocket} \
-          --proxy-port ${toString cfg.proxyPort}
-      '';
+      ExecStart = lib.getExe runScript;
       ExecStopPost = [ "+${lib.getExe cleanupScript}" ];
 
       Restart = "on-failure";
