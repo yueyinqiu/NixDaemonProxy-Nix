@@ -1,7 +1,6 @@
 # NixDaemonProxySwitchboard
 
-NixOS module to run [ProxySwitchboard](https://github.com/yueyinqiu/ProxySwitchboard) as the proxy for `nix-daemon`. Packaging lives in the separate [`ProxySwitchboard-Nix`](https://github.com/yueyinqiu/ProxySwitchboard-Nix) repository.
-
+NixOS module to run [ProxySwitchboard](https://github.com/yueyinqiu/ProxySwitchboard) as the proxy for `nix-daemon`.
 ## Adding as a flake input
 
 ```nix
@@ -12,7 +11,7 @@ NixOS module to run [ProxySwitchboard](https://github.com/yueyinqiu/ProxySwitchb
 }
 ```
 
-> To avoid building from source, you can use the `yueyinqiu` Cachix binary cache:
+> The default packages lives in the separate [`ProxySwitchboard-Nix`](https://github.com/yueyinqiu/ProxySwitchboard-Nix) repository. To avoid building from source, you can use the `yueyinqiu` Cachix binary cache:
 >
 > ```nix
 > {

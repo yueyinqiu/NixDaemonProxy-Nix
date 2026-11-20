@@ -29,6 +29,9 @@ assert smode[1] in "67", f"socket group bits = {smode!r}, want rw"
 assert smode[2] == "0", f"socket other bits = {smode!r}, want none"
 
 # --- drop-in for nix-daemon carries the proxy environment ---
+dropin_perms = machine.succeed("stat -c '%a %U:%G' /run/systemd/system/nix-daemon.service.d/nix-daemon-proxy.conf").strip()
+assert dropin_perms == "600 root:root", f"drop-in perms = {dropin_perms!r}, want 600 root:root"
+
 dropin = machine.succeed("cat /run/systemd/system/nix-daemon.service.d/nix-daemon-proxy.conf")
 assert "all_proxy=http://user:" in dropin, dropin
 assert "127.0.0.1:62720" in dropin, dropin
