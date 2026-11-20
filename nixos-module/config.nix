@@ -109,7 +109,6 @@ in
       ExecStopPost = "+${lib.getExe cleanupScript}";
 
       Restart = "on-failure";
-      RestartSec = "5s";
     };
   };
 }
