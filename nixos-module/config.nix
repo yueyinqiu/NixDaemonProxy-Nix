@@ -9,7 +9,7 @@ let
   runtimeDirectoryName = "nix-daemon-proxy";
   runtimeDirectory = "/run/${runtimeDirectoryName}";
   controlSocket = "${runtimeDirectory}/control.sock";
-  passwordFile = "${runtimeDirectory}/password";
+  environmentFile = "/run/${runtimeDirectoryName}-password";
 
   dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
@@ -27,9 +27,8 @@ let
       umask 077
 
       password="$(openssl rand -hex 16)"
-      uid="$(stat -c %u "${runtimeDirectory}")"
-      printf '%s' "$password" > "${passwordFile}"
-      chown "$uid" "${passwordFile}"
+      install -d -m 0750 "${runtimeDirectory}"
+      printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${environmentFile}"
 
       install -d "${dropInDirectory}"
       cat > "${dropInFile}" <<EOF
@@ -54,22 +53,9 @@ let
       pkgs.systemd
     ];
     text = ''
-      rm -f "${dropInFile}"
+      rm -f "${dropInFile}" "${environmentFile}"
       systemctl daemon-reload
       systemctl restart nix-daemon
-    '';
-  };
-
-  runScript = pkgs.writeShellApplication {
-    name = "nix-daemon-proxy-run";
-    runtimeInputs = [
-      pkgs.coreutils
-    ];
-    text = ''
-      PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD="$(cat ${passwordFile})" \
-        exec ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
-          --control-socket ${controlSocket} \
-          --proxy-port ${toString cfg.proxyPort}
     '';
   };
 in
@@ -89,6 +75,17 @@ in
     ++ (lib.optional cfg.packages.proxy-switchboard-client.install cfg.packages.proxy-switchboard-client.package)
     ++ (lib.optional cfg.packages.nix-daemon-proxy-client.install cfg.packages.nix-daemon-proxy-client.package);
 
+  systemd.services.nix-daemon-proxy-init = {
+    description = "Prepare the proxy switchboard password and nix-daemon configuration";
+    before = [ "nix-daemon-proxy-server.service" ];
+    requiredBy = [ "nix-daemon-proxy-server.service" ];
+
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = lib.getExe initScript;
+    };
+  };
+
   systemd.services.nix-daemon-proxy-server = {
     description = "ProxySwitchboard (upstream for nix-daemon)";
     wantedBy = [ "multi-user.target" ];
@@ -100,8 +97,13 @@ in
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
 
-      ExecStartPre = "+${lib.getExe initScript}";
-      ExecStart = lib.getExe runScript;
+      EnvironmentFile = environmentFile;
+
+      ExecStart = ''
+        ${lib.getExe cfg.packages.proxy-switchboard-server.package} \
+          --control-socket ${controlSocket} \
+          --proxy-port ${toString cfg.proxyPort}
+      '';
       ExecStopPost = "+${lib.getExe cleanupScript}";
 
       Restart = "on-failure";
