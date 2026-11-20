@@ -6,10 +6,12 @@
 let
   cfg = config.services.nix-daemon-proxy-switchboard;
 
-  runtimeDirectoryName = "nix-daemon-proxy";
-  runtimeDirectory = "/run/${runtimeDirectoryName}";
-  controlSocket = "${runtimeDirectory}/control.sock";
-  environmentFile = "/run/${runtimeDirectoryName}-password";
+  serviceDirectoryName = "nix-daemon-proxy";
+  runtimeDirectoryName = "run";
+
+  serviceDirectory = "/run/${serviceDirectoryName}";
+  controlSocket = "${serviceDirectory}/${runtimeDirectoryName}/control.sock";
+  environmentFile = "${serviceDirectory}/secret";
 
   dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
@@ -27,7 +29,7 @@ let
       umask 077
 
       password="$(openssl rand -hex 16)"
-      install -d -m 0750 "${runtimeDirectory}"
+      install -d -m 0755 "${serviceDirectory}"
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${environmentFile}"
 
       install -d "${dropInDirectory}"
@@ -93,7 +95,7 @@ in
     serviceConfig = {
       DynamicUser = true;
       Group = cfg.group;
-      RuntimeDirectory = runtimeDirectoryName;
+      RuntimeDirectory = "${serviceDirectoryName}/${runtimeDirectoryName}";
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
 
