@@ -100,9 +100,9 @@ in
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
 
-      ExecStartPre = [ "+${lib.getExe initScript}" ];
+      ExecStartPre = "+${lib.getExe initScript}";
       ExecStart = lib.getExe runScript;
-      ExecStopPost = [ "+${lib.getExe cleanupScript}" ];
+      ExecStopPost = "+${lib.getExe cleanupScript}";
 
       Restart = "on-failure";
       RestartSec = "5s";
