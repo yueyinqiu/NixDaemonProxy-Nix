@@ -31,7 +31,7 @@ let
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${environmentFile}"
 
       install -d "${dropInDirectory}"
-      proxy="http://user:""$password""@127.0.0.1:${toString cfg.proxyPort}/"
+      proxy="http://user:$password@127.0.0.1:${toString cfg.proxyPort}/"
       cat > "${dropInFile}" <<EOF
       [Service]
       Environment="all_proxy=$proxy"
