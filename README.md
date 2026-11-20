@@ -130,12 +130,17 @@ The full command set (`http`, `socks5`, `direct`, `from-json`, `status`) and the
 
 ## Rescue: proxy switched but not working
 
-This should be next to impossible, but just in case: the switch succeeded but the server crashed — and keeps crashing on restart. The control socket is gone and `nix-daemon` is pointed at a dead proxy, so you can't even rebuild NixOS.
+This should be next to impossible, but just in case: the server stops working but never exits — so systemd still sees it as running and never restarts it. `nix-daemon` stays pointed at the dead proxy, and you can't even rebuild NixOS.
 
-The proxy only reaches `nix-daemon` through a runtime systemd **drop-in**, so stopping the server (which removes it) or removing it by hand restores direct access:
+The proxy only reaches `nix-daemon` through a runtime systemd **drop-in**. Normally, stopping the server is enough — its stop hook removes the drop-in and restarts `nix-daemon` to restore direct access:
 
 ```sh
 sudo systemctl stop nix-daemon-proxy-server
+```
+
+If systemd itself is misbehaving and that hook didn't run, you can remove the drop-in by hand — it is just a file under `/run`:
+
+```sh
 sudo rm -f /run/systemd/system/nix-daemon.service.d/nix-daemon-proxy.conf
 sudo systemctl daemon-reload
 sudo systemctl restart nix-daemon
@@ -147,4 +152,4 @@ sudo systemctl restart nix-daemon
 
 ---
 
-All documentation and `description` fields in this repository are AI-generated.
+All documentation, option description fields, and tests in this repository are AI-generated.
