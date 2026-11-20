@@ -16,8 +16,6 @@ let
   dropInDirectory = "/run/systemd/system/nix-daemon.service.d";
   dropInFile = "${dropInDirectory}/nix-daemon-proxy.conf";
 
-  proxyUrl = "http://user:\${password}@127.0.0.1:${toString cfg.proxyPort}/";
-
   initScript = pkgs.writeShellApplication {
     name = "nix-daemon-proxy-init";
     runtimeInputs = [
@@ -33,14 +31,15 @@ let
       printf 'PROXY_SWITCHBOARD_SERVER_ARGUMENT_PROXY_PASSWORD=%s\n' "$password" > "${environmentFile}"
 
       install -d "${dropInDirectory}"
+      proxy="http://user:""$password""@127.0.0.1:${toString cfg.proxyPort}/"
       cat > "${dropInFile}" <<EOF
       [Service]
-      Environment="all_proxy=${proxyUrl}"
-      Environment="http_proxy=${proxyUrl}"
-      Environment="https_proxy=${proxyUrl}"
-      Environment="ALL_PROXY=${proxyUrl}"
-      Environment="HTTP_PROXY=${proxyUrl}"
-      Environment="HTTPS_PROXY=${proxyUrl}"
+      Environment="all_proxy=$proxy"
+      Environment="http_proxy=$proxy"
+      Environment="https_proxy=$proxy"
+      Environment="ALL_PROXY=$proxy"
+      Environment="HTTP_PROXY=$proxy"
+      Environment="HTTPS_PROXY=$proxy"
       EOF
 
       systemctl daemon-reload
