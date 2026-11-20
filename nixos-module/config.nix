@@ -94,6 +94,7 @@ in
     serviceConfig = {
       DynamicUser = true;
       Group = cfg.group;
+
       RuntimeDirectory = "${serviceDirectoryName}/${runtimeDirectoryName}";
       RuntimeDirectoryMode = "0750";
       UMask = "0007";
@@ -105,6 +106,7 @@ in
           --control-socket ${controlSocket} \
           --proxy-port ${toString cfg.proxyPort}
       '';
+
       ExecStopPost = "+${lib.getExe cleanupScript}";
 
       Restart = "on-failure";
