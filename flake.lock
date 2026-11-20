@@ -21,11 +21,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1795103358,
-        "narHash": "sha256-t2b04J+ko4CinlhlK0rafdvA3K33UuXmKOHez5plHx0=",
+        "lastModified": 1795190907,
+        "narHash": "sha256-7OZFtD1TEjyc7u+cl63f7XWiUEiWGcK8XYQRiE3V8E4=",
         "owner": "yueyinqiu",
         "repo": "ProxySwitchboard-Nix",
-        "rev": "ddaeda4f548d6cc73bd7f7df87a30c0a3b9b33d9",
+        "rev": "da8af8b2411c86aa9b447303be44767642431f71",
         "type": "github"
       },
       "original": {
