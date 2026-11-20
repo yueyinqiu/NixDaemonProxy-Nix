@@ -67,7 +67,9 @@ in
     pkgs.runCommand "nix-daemon-proxy" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
       mkdir -p "$out/bin"
       makeWrapper ${lib.getExe cfg.packages.proxy-switchboard-client.package} "$out/bin/nix-daemon-proxy" \
-        --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg controlSocket}
+        --set-default PROXY_SWITCHBOARD_ARGUMENT_CONTROL_SOCKET ${lib.escapeShellArg controlSocket} \
+        --set PROXY_SWITCHBOARD_TITLE nix-daemon-proxy \
+        --set PROXY_SWITCHBOARD_EXECUTABLE_NAME nix-daemon-proxy
     ''
   );
 
