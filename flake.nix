@@ -1,33 +1,23 @@
 {
-  description = "Nix packaging for NixDaemonProxy";
+  description = "NixOS module to run ProxySwitchboard as the proxy for nix-daemon";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    proxy-switchboard.url = "github:yueyinqiu/ProxySwitchboard-Nix";
   };
 
   outputs =
     {
       self,
-      nixpkgs,
+      proxy-switchboard,
+      ...
     }:
     let
-      forAllSystems = nixpkgs.lib.genAttrs nixpkgs.lib.systems.flakeExposed;
+      module = import ./nixos-module { inherit proxy-switchboard; };
     in
     {
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
-          nix-daemon-proxy-client = pkgs.callPackage ./packages/client { };
-          nix-daemon-proxy-server = pkgs.callPackage ./packages/server { };
-        }
-      );
-
       nixosModules = {
-        nix-daemon-proxy = ./nixos-module;
-        default = ./nixos-module;
+        nix-daemon-proxy-switchboard = module;
+        default = module;
       };
     };
 }
